@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feedback Entretien — Océane Comlan</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --cream: #F7F3EE;
+    --gold: #C9A84C;
+    --gold-light: #E8D5A3;
+    --dark: #1A1611;
+    --charcoal: #1A1611;
+    --muted: #4A4035;
+    --success: #4CAF82;
+    --accent: #8B6914;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== GRAIN OVERLAY ===== */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen {
+    display: none;
+    min-height: 100vh;
+    animation: fadeIn 0.6s ease;
+  }
+  .screen.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== WELCOME SCREEN ===== */
+  #screen-welcome {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+    background: var(--dark);
+  }
+
+  .welcome-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.08) 0%, transparent 50%);
+  }
+
+  .welcome-content { position: relative; z-index: 2; max-width: 640px; }
+
+  .logo-mark {
+    width: 64px; height: 64px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 32px;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 1px;
+  }
+
+  .welcome-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  .welcome-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 6vw, 58px);
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1.1;
+    margin-bottom: 24px;
+  }
+
+  .welcome-title span { color: var(--gold); }
+
+  .welcome-desc {
+    color: rgba(247,243,238,0.6);
+    font-size: 16px;
+    line-height: 1.7;
+    margin-bottom: 48px;
+  }
+
+  .candidate-card {
+    background: rgba(247,243,238,0.06);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 16px;
+    padding: 24px 32px;
+    margin-bottom: 48px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .candidate-avatar {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--gold), var(--accent));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--dark);
+    flex-shrink: 0;
+  }
+
+  .candidate-info h3 {
+    color: var(--cream);
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .candidate-info p {
+    color: var(--gold);
+    font-size: 13px;
+  }
+
+  .btn-start {
+    background: var(--gold);
+    color: var(--dark);
+    border: none;
+    padding: 18px 56px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-start::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.15);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(201,168,76,0.3); }
+  .btn-start:hover::after { transform: translateX(0); }
+
+  /* ===== QUIZ SCREEN ===== */
+  #screen-quiz {
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--dark);
+  }
+
+  .quiz-header {
+    background: var(--dark);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .quiz-logo {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    font-size: 18px;
+  }
+
+  .progress-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .progress-text {
+    color: #F7F3EE;
+    font-size: 13px;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .progress-bar-wrap {
+    width: 200px;
+    height: 4px;
+    background: rgba(247,243,238,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--accent));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .quiz-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    max-width: 780px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .question-category {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  .question-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(22px, 3.5vw, 32px);
+    font-weight: 600;
+    color: #FFFFFF;
+    text-align: center;
+    line-height: 1.35;
+    margin-bottom: 48px;
+  }
+
+  /* ===== STAR RATING ===== */
+  .stars-wrap {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  .star {
+    font-size: 42px;
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s, text-shadow 0.2s;
+    color: #6B4E1A;
+    user-select: none;
+    line-height: 1;
+    filter: none;
+  }
+  .star.active { color: #C9A84C; text-shadow: 0 0 12px rgba(201,168,76,0.5); transform: none; }
+  .star:hover, .star.hover-active { color: #E8C55A; text-shadow: 0 0 16px rgba(232,197,90,0.6); transform: scale(1.2); }
+
+  .star-label {
+    text-align: center;
+    font-size: 13px;
+    color: #FFFFFF;
+    height: 20px;
+    margin-bottom: 32px;
+    font-weight: 500;
+  }
+
+  /* ===== TEXTAREA ===== */
+  .comment-wrap {
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .comment-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    margin-bottom: 12px;
+    display: block;
+    font-weight: 500;
+  }
+
+  .comment-textarea {
+    width: 100%;
+    min-height: 100px;
+    background: rgba(247,243,238,0.07);
+    border: 1px solid rgba(247,243,238,0.2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: #FFFFFF;
+    resize: vertical;
+    transition: border-color 0.25s;
+    outline: none;
+  }
+
+  .comment-textarea::placeholder { color: rgba(247,243,238,0.4); }
+
+  .comment-textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+  }
+
+  /* ===== CHECKLIST ===== */
+  .check-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    max-width: 600px;
+    margin-bottom: 16px;
+  }
+
+  .check-chip {
+    padding: 10px 20px;
+    border: 1.5px solid rgba(247,243,238,0.35);
+    border-radius: 100px;
+    font-size: 14px;
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: all 0.25s;
+    user-select: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+  }
+
+  .check-chip.selected {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--dark);
+    font-weight: 500;
+  }
+
+  /* ===== NAV BUTTONS ===== */
+  .quiz-nav {
+    display: flex;
+    gap: 16px;
+    margin-top: 40px;
+    align-items: center;
+  }
+
+  .btn-prev {
+    background: transparent;
+    border: 1.5px solid rgba(247,243,238,0.25);
+    color: rgba(247,243,238,0.7);
+    padding: 14px 28px;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .btn-prev:hover { border-color: var(--gold); color: var(--gold); }
+
+  .btn-next {
+    background: var(--gold);
+    color: var(--dark);
+    border: none;
+    padding: 14px 40px;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-next:hover { background: #E8C55A; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,168,76,0.35); }
+  .btn-next:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ===== SUCCESS TOAST ===== */
+  .toast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: var(--success);
+    color: white;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(76,175,130,0.3);
+  }
+  .toast.show { transform: translateX(0); }
+
+  /* ===== DASHBOARD SCREEN ===== */
+  #screen-dashboard {
+    flex-direction: column;
+    background: var(--cream);
+    min-height: 100vh;
+  }
+
+  .dash-header {
+    background: var(--dark);
+    padding: 32px 60px;
+    color: var(--cream);
+  }
+
+  .dash-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .dash-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px;
+    font-weight: 700;
+  }
+
+  .dash-subtitle {
+    color: rgba(247,243,238,0.55);
+    font-size: 14px;
+    margin-top: 8px;
+  }
+
+  .dash-body {
+    padding: 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* ===== KPI CARDS ===== */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 48px;
+  }
+
+  .kpi-card {
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    border: 1px solid rgba(122,110,98,0.12);
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.5s ease forwards;
+    opacity: 0;
+  }
+
+  .kpi-card:nth-child(1) { animation-delay: 0.1s; }
+  .kpi-card:nth-child(2) { animation-delay: 0.2s; }
+  .kpi-card:nth-child(3) { animation-delay: 0.3s; }
+  .kpi-card:nth-child(4) { animation-delay: 0.4s; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--accent));
+  }
+
+  .kpi-icon { font-size: 24px; margin-bottom: 12px; }
+  .kpi-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #4A4035; margin-bottom: 8px; font-weight: 600; }
+  .kpi-value { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: var(--dark); line-height: 1; }
+  .kpi-sub { font-size: 13px; color: #4A4035; margin-top: 6px; font-weight: 500; }
+
+  /* ===== CHART GRID ===== */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+
+  @media (max-width: 768px) {
+    .charts-grid { grid-template-columns: 1fr; }
+    .dash-body { padding: 30px 20px; }
+    .dash-header { padding: 24px 20px; }
+  }
+
+  .chart-card {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    border: 1px solid rgba(122,110,98,0.12);
+  }
+
+  .chart-card.wide { grid-column: 1 / -1; }
+
+  .chart-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+
+  .chart-card p {
+    font-size: 13px;
+    color: #4A4035;
+    margin-bottom: 28px;
+    font-weight: 500;
+  }
+
+  /* ===== COMMENTS SECTION ===== */
+  .comments-section {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    border: 1px solid rgba(122,110,98,0.12);
+    margin-bottom: 48px;
+  }
+
+  .comments-section h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    margin-bottom: 4px;
+  }
+
+  .comments-section > p {
+    color: #4A4035;
+    font-size: 14px;
+    margin-bottom: 32px;
+    font-weight: 500;
+  }
+
+  .comment-item {
+    padding: 20px 0;
+    border-bottom: 1px solid rgba(122,110,98,0.1);
+    display: flex;
+    gap: 16px;
+  }
+
+  .comment-item:last-child { border-bottom: none; }
+
+  .comment-tag {
+    background: var(--gold-light);
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+    white-space: nowrap;
+    height: fit-content;
+    margin-top: 2px;
+  }
+
+  .comment-body p {
+    font-size: 15px;
+    color: var(--charcoal);
+    line-height: 1.6;
+  }
+
+  /* ===== THANK YOU SCREEN ===== */
+  #screen-thanks {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 40px;
+    background: var(--dark);
+    position: relative;
+  }
+
+  .confetti-ring {
+    width: 100px; height: 100px;
+    border: 3px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    margin: 0 auto 40px;
+    animation: ringPulse 2s ease infinite;
+  }
+
+  @keyframes ringPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+    50% { box-shadow: 0 0 0 20px rgba(201,168,76,0); }
+  }
+
+  .thanks-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  .thanks-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 5vw, 52px);
+    color: var(--cream);
+    margin-bottom: 24px;
+    line-height: 1.15;
+  }
+
+  .thanks-desc {
+    color: rgba(247,243,238,0.6);
+    font-size: 16px;
+    line-height: 1.8;
+    max-width: 540px;
+    margin: 0 auto 48px;
+  }
+
+  .thanks-divider {
+    width: 60px;
+    height: 2px;
+    background: var(--gold);
+    margin: 0 auto 40px;
+  }
+
+  .thanks-quote {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 20px;
+    color: var(--gold-light);
+    max-width: 480px;
+    margin: 0 auto 48px;
+    line-height: 1.5;
+  }
+
+  .btn-dashboard {
+    background: transparent;
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+    padding: 14px 40px;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 0;
+  }
+
+  .btn-dashboard:hover {
+    background: var(--gold);
+    color: var(--dark);
+  }
+
+  /* ===== AUDIO INDICATOR ===== */
+  .audio-bar {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .audio-bar.playing { opacity: 1; }
+  .audio-bar span {
+    width: 3px;
+    background: var(--success);
+    border-radius: 2px;
+    animation: bars 0.8s ease infinite;
+  }
+  .audio-bar span:nth-child(1) { height: 12px; animation-delay: 0s; }
+  .audio-bar span:nth-child(2) { height: 20px; animation-delay: 0.1s; }
+  .audio-bar span:nth-child(3) { height: 14px; animation-delay: 0.2s; }
+  .audio-bar span:nth-child(4) { height: 18px; animation-delay: 0.15s; }
+
+  @keyframes bars {
+    0%, 100% { transform: scaleY(0.5); }
+    50% { transform: scaleY(1); }
+  }
+
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(76,175,130,0.1);
+    color: var(--success);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+
+  /* ===== NAME INPUT ===== */
+  .name-input-wrap {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 32px;
+    text-align: left;
+  }
+
+  .name-input-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(247,243,238,0.5);
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .name-input {
+    width: 100%;
+    background: rgba(247,243,238,0.07);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    color: #FFFFFF;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+
+  .name-input::placeholder { color: rgba(247,243,238,0.3); }
+  .name-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+  }
+
+  /* ===== DB SCREEN ===== */
+  #screen-db {
+    flex-direction: column;
+    background: var(--cream);
+    min-height: 100vh;
+  }
+
+  .db-header {
+    background: var(--charcoal);
+    padding: 28px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .db-header-left h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--cream);
+    font-size: 26px;
+    margin-bottom: 4px;
+  }
+
+  .db-header-left p {
+    color: rgba(247,243,238,0.5);
+    font-size: 13px;
+  }
+
+  .btn-new-eval {
+    background: var(--gold);
+    color: var(--dark);
+    border: none;
+    padding: 12px 28px;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .btn-new-eval:hover { background: #E8C55A; transform: translateY(-1px); }
+
+  .db-body {
+    padding: 48px 60px;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    .db-body { padding: 24px 20px; }
+    .db-header { padding: 20px; }
+  }
+
+  .db-empty {
+    text-align: center;
+    padding: 80px 40px;
+    color: var(--muted);
+  }
+
+  .db-empty .db-empty-icon { font-size: 48px; margin-bottom: 20px; }
+  .db-empty p { font-size: 16px; }
+
+  .db-table-wrap {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(122,110,98,0.12);
+    margin-bottom: 32px;
+  }
+
+  .db-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .db-table thead {
+    background: var(--dark);
+  }
+
+  .db-table thead th {
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .db-table tbody tr {
+    border-bottom: 1px solid rgba(122,110,98,0.1);
+    transition: background 0.2s;
+  }
+
+  .db-table tbody tr:last-child { border-bottom: none; }
+  .db-table tbody tr:hover { background: rgba(201,168,76,0.04); }
+
+  .db-table tbody td {
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--dark);
+    font-weight: 500;
+  }
+
+  .db-score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .db-score-pill.high { background: rgba(76,175,130,0.12); color: #2E8B57; }
+  .db-score-pill.mid  { background: rgba(201,168,76,0.15); color: var(--accent); }
+  .db-score-pill.low  { background: rgba(200,80,80,0.1); color: #B85050; }
+
+  .db-btn-view {
+    background: transparent;
+    border: 1px solid rgba(122,110,98,0.25);
+    color: var(--charcoal);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+
+  .db-btn-view:hover { border-color: var(--gold); color: var(--accent); }
+
+  .db-btn-delete {
+    background: transparent;
+    border: none;
+    color: rgba(200,80,80,0.5);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    transition: color 0.2s;
+  }
+
+  .db-btn-delete:hover { color: #B85050; }
+
+  .db-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .db-stat {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 24px;
+    border: 1px solid rgba(122,110,98,0.12);
+    border-top: 3px solid var(--gold);
+  }
+
+  .db-stat-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+  .db-stat-value { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--dark); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ &nbsp;Réponse enregistrée</div>
+
+<!-- AUDIO -->
+<audio id="success-sound" preload="auto">
+  <source src="data:audio/wav;base64,UklGRiQCAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQACAACAf39/f39+fn9/f39/gH9/f4B/f39/fn5/f4CAf39/f39/f4B/f39/f39/gICAgH9/f39/gICAgH+Af39/f39/gH+Af4CAgH+AgICAgICAgICAgICBgYGBgYCAgICAgIGBgYGBgYGBgYGBgYGBgYGBgYGBgoKCgoKCgoKCgoKCgoODg4ODg4ODg4ODg4ODg4ODg4ODg4SEhISEhISEhISEhIWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYSEhISEhIODg4ODgoKCgoCAgICAgH9/f39/fn5+fn5+fn5+fn5+fn5+fn5+fn59fX19fX19fX19fX19fX19fX19fXx8fHx8fHx8fHx8fHx8e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t8fHx8fHx8fHx8fHx8fX19fX19fX19fX19fX19fn5+fn5+fn5+fn5+fn9/f39/f39/f39/gH9/f4B/gH+Af39/f39/gICAgICAgICAgICAgIB/gH+Af3+AgICAgICAgICAgA==" type="audio/wav">
+</audio>
+
+<!-- ============================================================ -->
+<!-- SCREEN 1: WELCOME -->
+<!-- ============================================================ -->
+<div class="screen active" id="screen-welcome">
+  <div class="welcome-bg"></div>
+  <div class="welcome-content">
+    <div class="logo-mark">FR</div>
+    <div class="welcome-eyebrow">Foncière Renaissance × Global Icons</div>
+    <h1 class="welcome-title">Évaluation de<br>l'entretien<br><span>candidat</span></h1>
+    <p class="welcome-desc">Ce formulaire vous permet de partager votre retour sur le dossier présenté par la candidate. Vos réponses alimenteront un tableau de bord synthétique.</p>
+    <div class="candidate-card">
+      <div class="candidate-avatar">OC</div>
+      <div class="candidate-info">
+        <h3>Océane Comlan</h3>
+        <p>Chargée des Relations Investisseurs & Partenaires — Entretien du 23 févr. 2025</p>
+      </div>
+    </div>
+    <div class="name-input-wrap">
+      <label class="name-input-label">Votre nom (évaluateur)</label>
+      <input class="name-input" id="evaluator-name" type="text" placeholder="Ex : Vittorio Pelizza" maxlength="80" />
+    </div>
+    <button class="btn-start" id="btn-start" onclick="startQuiz()" disabled>Commencer l'évaluation →</button>
+    <div style="margin-top:20px">
+      <button onclick="showScreen('screen-db')" style="background:transparent;border:none;color:rgba(247,243,238,0.4);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;">Voir les évaluations enregistrées</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 2: QUIZ -->
+<!-- ============================================================ -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-header">
+    <div class="quiz-logo">Foncière Renaissance</div>
+    <div class="progress-container">
+      <div class="audio-bar" id="audio-bars">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <span class="progress-text" id="progress-text">Question 1 / 12</span>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-bar" style="width:8%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-body">
+    <div class="question-category" id="q-category"></div>
+    <div class="question-text" id="q-text"></div>
+    <div id="q-input"></div>
+    <div class="quiz-nav">
+      <button class="btn-prev" id="btn-prev" onclick="prevQ()">← Précédent</button>
+      <button class="btn-next" id="btn-next" onclick="nextQ()">Suivant →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 3: DASHBOARD -->
+<!-- ============================================================ -->
+<div class="screen" id="screen-dashboard">
+  <div class="dash-header">
+    <div class="dash-eyebrow">Rapport d'évaluation</div>
+    <h1 class="dash-title">Océane Comlan</h1>
+    <div class="dash-subtitle">Synthèse des retours — Entretien Foncière Renaissance</div>
+  </div>
+
+  <div class="dash-body">
+    <!-- KPIs -->
+    <div class="kpi-row" id="kpi-row"></div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Profil du Candidat</h3>
+        <p>Vue radar des compétences évaluées</p>
+        <canvas id="chart-radar" height="280"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Pertinence des Documents</h3>
+        <p>Adéquation des pièces jointes fournies</p>
+        <canvas id="chart-docs" height="280"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Dimensions d'évaluation</h3>
+        <p>Score par catégorie sur 5</p>
+        <canvas id="chart-bars" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Points à approfondir</h3>
+        <p>Axes de développement identifiés</p>
+        <canvas id="chart-doughnut" height="280"></canvas>
+      </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="comments-section" id="comments-section">
+      <h3>Observations qualitatives</h3>
+      <p>Commentaires libres renseignés lors de l'évaluation</p>
+      <div id="comments-list"></div>
+    </div>
+
+    <div style="text-align:center;display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+      <button class="btn-start" onclick="goToThanks()">Terminer & Enregistrer →</button>
+      <button onclick="showScreen('screen-db')" style="background:transparent;border:1.5px solid rgba(122,110,98,0.3);color:var(--muted);padding:14px 28px;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:15px;cursor:pointer;transition:all 0.25s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='rgba(122,110,98,0.3)';this.style.color='var(--muted)'">Voir la base de données</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 4: THANK YOU -->
+<!-- ============================================================ -->
+<div class="screen" id="screen-thanks">
+  <div class="confetti-ring">🌟</div>
+  <div class="thanks-eyebrow">Merci pour votre temps</div>
+  <h1 class="thanks-title">Feedback<br>enregistré avec soin</h1>
+  <div class="thanks-divider"></div>
+  <p class="thanks-quote">"Chaque retour est une opportunité d'apprentissage et de croissance partagée."</p>
+
+  <button class="btn-dashboard" onclick="showScreen('screen-dashboard')">← Voir le tableau de bord</button>
+  <div style="margin-top:16px">
+    <button onclick="showScreen('screen-db')" style="background:transparent;border:none;color:rgba(247,243,238,0.4);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;">Consulter toutes les évaluations</button>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// DATA
+// ================================================================
+const QUESTIONS = [
+  // PROFIL DU CANDIDAT
+  {
+    id: 'overall_impression',
+    category: 'Profil du Candidat',
+    text: 'Quelle est votre impression générale sur le profil d\'Océane Comlan pour ce poste ?',
+    type: 'stars',
+    labels: ['', 'Profil inadapté', 'Sous le niveau attendu', 'Profil correct', 'Très bon profil', 'Profil exceptionnel'],
+    required: true,
+  },
+  {
+    id: 'personality',
+    category: 'Profil du Candidat',
+    text: 'Comment évaluez-vous l\'aisance relationnelle et la communication de la candidate ?',
+    type: 'stars',
+    labels: ['', 'Très réservée', 'Manque d\'aisance', 'Correcte', 'À l\'aise', 'Naturellement impactante'],
+    required: true,
+  },
+  {
+    id: 'motivation',
+    category: 'Profil du Candidat',
+    text: 'Dans quelle mesure la candidate a-t-elle démontré une motivation authentique pour le secteur immobilier et ce poste ?',
+    type: 'stars',
+    labels: ['', 'Aucune motivation perçue', 'Peu convaincante', 'Honnête', 'Clairement motivée', 'Passion évidente'],
+    required: true,
+  },
+  // PIÈCES JOINTES
+  {
+    id: 'cv_relevance',
+    category: 'Pertinence des Documents',
+    text: 'Le CV fourni reflète-t-il bien les compétences attendues pour un poste en relations investisseurs ?',
+    type: 'stars',
+    labels: ['', 'Hors sujet', 'Partiel', 'Acceptable', 'Bien construit', 'Parfaitement aligné'],
+    required: true,
+  },
+  {
+    id: 'pptx_quality',
+    category: 'Pertinence des Documents',
+    text: 'La présentation PowerPoint sur Foncière Renaissance était-elle pertinente et professionnelle ?',
+    type: 'stars',
+    labels: ['', 'Très décevante', 'Insuffisante', 'Correcte', 'Solide', 'Excellente'],
+    required: true,
+  },
+  {
+    id: 'docs_overall',
+    category: 'Pertinence des Documents',
+    text: 'Quels documents ont apporté le plus de valeur à votre évaluation ?',
+    type: 'chips',
+    options: ['CV', 'Présentation Foncière', 'Étude de cas (ODS)', 'Script d\'appel (PDF)', 'Analyse patrimoniale', 'Aucun en particulier'],
+    multiple: true,
+    required: false,
+  },
+  // IMPLICATION
+  {
+    id: 'preparation',
+    category: 'Implication & Préparation',
+    text: 'Quel niveau de préparation avez-vous perçu chez la candidate pour cet entretien ?',
+    type: 'stars',
+    labels: ['', 'Pas préparée', 'Préparation légère', 'Préparée', 'Bien préparée', 'Préparation exemplaire'],
+    required: true,
+  },
+  {
+    id: 'commitment',
+    category: 'Implication & Préparation',
+    text: 'La candidate a-t-elle montré un réel investissement personnel dans la réalisation du cas pratique ?',
+    type: 'stars',
+    labels: ['', 'Minimal', 'Insuffisant', 'Correct', 'Investi', 'Remarquable'],
+    required: true,
+  },
+  // TECHNIQUE
+  {
+    id: 'technical_depth',
+    category: 'Contenu Technique',
+    text: 'Comment évaluez-vous la maîtrise des concepts financiers et immobiliers démontrée ?',
+    type: 'stars',
+    labels: ['', 'Lacunaire', 'Basique', 'Satisfaisante', 'Solide', 'Experte'],
+    required: true,
+  },
+  {
+    id: 'points_to_deepen',
+    category: 'Contenu Technique',
+    text: 'Quels points techniques nécessitent d\'être approfondis selon vous ?',
+    type: 'chips',
+    options: ['Valorisation immobilière', 'Club Deal obligataire', 'Mécanismes In Fine', 'Analyse de risque', 'Pitch investisseurs', 'Reporting & KPI', 'Fiscalité immobilière'],
+    multiple: true,
+    required: false,
+  },
+  {
+    id: 'pitching_ability',
+    category: 'Contenu Technique',
+    text: 'La candidate maîtrise-t-elle le pitch d\'un produit financier comme le Club Deal de 27M€ présenté ?',
+    type: 'stars',
+    labels: ['', 'Ne maîtrise pas', 'Approximatif', 'Compréhensible', 'Convaincant', 'Maîtrise parfaite'],
+    required: true,
+  },
+  // COMMENTAIRES
+  {
+    id: 'free_comment',
+    category: 'Observations Globales',
+    text: 'Y a-t-il des observations spécifiques que vous souhaitez partager sur l\'entretien ?',
+    type: 'textarea',
+    required: false,
+  },
+];
+
+// ================================================================
+// STATE
+// ================================================================
+let currentQ = 0;
+let answers = {};
+let evaluatorName = '';
+
+const starLabels = {
+  1: '★ Insuffisant',
+  2: '★★ À améliorer',
+  3: '★★★ Satisfaisant',
+  4: '★★★★ Très bien',
+  5: '★★★★★ Excellent',
+};
+
+// ================================================================
+// NAME INPUT GATING
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('evaluator-name');
+  const btn = document.getElementById('btn-start');
+  if (input && btn) {
+    input.addEventListener('input', () => {
+      btn.disabled = input.value.trim().length < 2;
+    });
+  }
+  loadDbScreen();
+});
+
+// ================================================================
+// STORAGE HELPERS
+// ================================================================
+const DB_KEY = 'feedbacks_oceane';
+
+function loadAll() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveEntry(entry) {
+  try {
+    const all = loadAll();
+    all.push(entry);
+    localStorage.setItem(DB_KEY, JSON.stringify(all));
+  } catch(e) { console.error('Storage error', e); }
+}
+
+function deleteEntry(id) {
+  try {
+    const all = loadAll().filter(e => e.id !== id);
+    localStorage.setItem(DB_KEY, JSON.stringify(all));
+    loadDbScreen();
+  } catch(e) {}
+}
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  if (id === 'screen-db') loadDbScreen();
+}
+
+function startQuiz() {
+  const input = document.getElementById('evaluator-name');
+  evaluatorName = input ? input.value.trim() : 'Anonyme';
+  currentQ = 0;
+  answers = {};
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function goToThanks() {
+  // Save to DB
+  const scores = [
+    answers['overall_impression'] || 0,
+    answers['personality'] || 0,
+    answers['motivation'] || 0,
+    answers['preparation'] || 0,
+    answers['commitment'] || 0,
+    answers['technical_depth'] || 0,
+    answers['pitching_ability'] || 0,
+    answers['cv_relevance'] || 0,
+    answers['pptx_quality'] || 0,
+  ].filter(v => v > 0);
+
+  const avg = scores.length ? (scores.reduce((a,b) => a+b, 0) / scores.length) : 0;
+
+  const entry = {
+    id: Date.now().toString(),
+    evaluator: evaluatorName,
+    date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }),
+    timestamp: Date.now(),
+    globalScore: parseFloat(avg.toFixed(2)),
+    answers: { ...answers },
+  };
+
+  saveEntry(entry);
+  showScreen('screen-thanks');
+}
+
+// ================================================================
+// RENDER QUESTION
+// ================================================================
+function renderQuestion() {
+  const q = QUESTIONS[currentQ];
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-text').textContent = q.text;
+
+  const pct = Math.round(((currentQ + 1) / QUESTIONS.length) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `Question ${currentQ + 1} / ${QUESTIONS.length}`;
+  document.getElementById('btn-prev').style.display = currentQ === 0 ? 'none' : 'inline-block';
+
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.textContent = currentQ === QUESTIONS.length - 1 ? 'Voir les résultats ✓' : 'Suivant →';
+
+  // Render input
+  const container = document.getElementById('q-input');
+  container.innerHTML = '';
+
+  if (q.type === 'stars') renderStars(container, q);
+  else if (q.type === 'chips') renderChips(container, q);
+  else if (q.type === 'textarea') renderTextarea(container, q);
+
+  validateNext();
+}
+
+function renderStars(container, q) {
+  const wrap = document.createElement('div');
+  wrap.className = 'stars-wrap';
+
+  const label = document.createElement('div');
+  label.className = 'star-label';
+  label.id = 'star-label-' + q.id;
+
+  const current = answers[q.id] || 0;
+  if (current > 0) label.textContent = q.labels[current];
+
+  for (let i = 1; i <= 5; i++) {
+    const star = document.createElement('span');
+    star.className = 'star' + (i <= current ? ' active' : '');
+    star.textContent = '★';
+    star.dataset.val = i;
+
+    star.addEventListener('mouseenter', () => {
+      document.querySelectorAll('.star').forEach((s, idx) => {
+        s.classList.toggle('hover-active', idx < i);
+      });
+      document.getElementById('star-label-' + q.id).textContent = q.labels[i];
+    });
+
+    star.addEventListener('mouseleave', () => {
+      document.querySelectorAll('.star').forEach(s => s.classList.remove('hover-active'));
+      const cur = answers[q.id] || 0;
+      document.getElementById('star-label-' + q.id).textContent = cur > 0 ? q.labels[cur] : '';
+    });
+
+    star.addEventListener('click', () => {
+      answers[q.id] = i;
+      document.querySelectorAll('.star').forEach((s, idx) => {
+        s.classList.toggle('active', idx < i);
+      });
+      label.textContent = q.labels[i];
+      playSuccess();
+      validateNext();
+    });
+
+    wrap.appendChild(star);
+  }
+
+  container.appendChild(wrap);
+  container.appendChild(label);
+}
+
+function renderChips(container, q) {
+  const wrap = document.createElement('div');
+  wrap.className = 'check-grid';
+
+  if (!answers[q.id]) answers[q.id] = [];
+
+  q.options.forEach(opt => {
+    const chip = document.createElement('button');
+    chip.className = 'check-chip' + (answers[q.id].includes(opt) ? ' selected' : '');
+    chip.textContent = opt;
+
+    chip.addEventListener('click', () => {
+      const idx = answers[q.id].indexOf(opt);
+      if (idx === -1) {
+        if (!q.multiple) answers[q.id] = [];
+        answers[q.id].push(opt);
+        chip.classList.add('selected');
+        playSuccess();
+      } else {
+        answers[q.id].splice(idx, 1);
+        chip.classList.remove('selected');
+      }
+      if (!q.multiple) {
+        wrap.querySelectorAll('.check-chip').forEach(c => {
+          c.classList.toggle('selected', c.textContent === opt && idx === -1);
+        });
+      }
+      validateNext();
+    });
+
+    wrap.appendChild(chip);
+  });
+
+  container.appendChild(wrap);
+}
+
+function renderTextarea(container, q) {
+  const wrap = document.createElement('div');
+  wrap.className = 'comment-wrap';
+
+  const label = document.createElement('label');
+  label.className = 'comment-label';
+  label.textContent = 'Commentaire (optionnel)';
+
+  const ta = document.createElement('textarea');
+  ta.className = 'comment-textarea';
+  ta.placeholder = 'Partagez vos observations…';
+  ta.value = answers[q.id] || '';
+  ta.addEventListener('input', () => { answers[q.id] = ta.value; });
+
+  wrap.appendChild(label);
+  wrap.appendChild(ta);
+  container.appendChild(wrap);
+}
+
+function validateNext() {
+  const q = QUESTIONS[currentQ];
+  const btn = document.getElementById('btn-next');
+  if (!q.required) { btn.disabled = false; return; }
+  const val = answers[q.id];
+  if (q.type === 'stars') btn.disabled = !(val && val > 0);
+  else if (q.type === 'chips') btn.disabled = !val || val.length === 0;
+  else btn.disabled = false;
+}
+
+function nextQ() {
+  if (currentQ < QUESTIONS.length - 1) {
+    currentQ++;
+    renderQuestion();
+  } else {
+    buildDashboard();
+    showScreen('screen-dashboard');
+  }
+}
+
+function prevQ() {
+  if (currentQ > 0) { currentQ--; renderQuestion(); }
+}
+
+// ================================================================
+// SOUND
+// ================================================================
+function playSuccess() {
+  const bars = document.getElementById('audio-bars');
+  bars.classList.add('playing');
+
+  // Generate beep with Web Audio API
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1100, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.25);
+  } catch(e) {}
+
+  showToast();
+  setTimeout(() => bars.classList.remove('playing'), 1200);
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ================================================================
+// DASHBOARD
+// ================================================================
+function buildDashboard() {
+  buildKPIs();
+  buildRadar();
+  buildDocsChart();
+  buildBarsChart();
+  buildDoughnut();
+  buildComments();
+}
+
+function getScore(id) { return answers[id] || 0; }
+
+function buildKPIs() {
+  const scores = [
+    getScore('overall_impression'),
+    getScore('personality'),
+    getScore('motivation'),
+    getScore('preparation'),
+    getScore('commitment'),
+    getScore('technical_depth'),
+    getScore('pitching_ability'),
+    getScore('cv_relevance'),
+    getScore('pptx_quality'),
+  ].filter(v => v > 0);
+
+  const avg = scores.length ? (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(1) : '—';
+  const techAvg = ((getScore('technical_depth') + getScore('pitching_ability')) / 2).toFixed(1);
+  const implAvg = ((getScore('preparation') + getScore('commitment')) / 2).toFixed(1);
+  const docsAvg = ((getScore('cv_relevance') + getScore('pptx_quality')) / 2).toFixed(1);
+
+  const kpis = [
+    { icon: '🏆', label: 'Score Global', value: avg + '/5', sub: 'Moyenne générale' },
+    { icon: '⚙️', label: 'Technique', value: techAvg + '/5', sub: 'Maîtrise financière' },
+    { icon: '🔥', label: 'Implication', value: implAvg + '/5', sub: 'Préparation & Engagement' },
+    { icon: '📎', label: 'Documents', value: docsAvg + '/5', sub: 'Qualité des pièces jointes' },
+  ];
+
+  const row = document.getElementById('kpi-row');
+  row.innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>
+  `).join('');
+}
+
+function buildRadar() {
+  const ctx = document.getElementById('chart-radar').getContext('2d');
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Impression', 'Communication', 'Motivation', 'Préparation', 'Implication', 'Technique', 'Pitch'],
+      datasets: [{
+        label: 'Océane Comlan',
+        data: [
+          getScore('overall_impression'),
+          getScore('personality'),
+          getScore('motivation'),
+          getScore('preparation'),
+          getScore('commitment'),
+          getScore('technical_depth'),
+          getScore('pitching_ability'),
+        ],
+        backgroundColor: 'rgba(201,168,76,0.15)',
+        borderColor: '#C9A84C',
+        borderWidth: 2,
+        pointBackgroundColor: '#C9A84C',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          min: 0, max: 5,
+          ticks: { stepSize: 1, font: { size: 11 }, color: '#7A6E62', backdropColor: 'transparent' },
+          grid: { color: 'rgba(122,110,98,0.15)' },
+          pointLabels: { font: { size: 12, family: 'DM Sans' }, color: '#2D2820' }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function buildDocsChart() {
+  const ctx = document.getElementById('chart-docs').getContext('2d');
+  const docs = answers['docs_overall'] || ['Aucun sélectionné'];
+  const all = ['CV', 'Présentation Foncière', 'Étude de cas (ODS)', 'Script d\'appel (PDF)', 'Analyse patrimoniale', 'Aucun en particulier'];
+  const values = all.map(d => docs.includes(d) ? 1 : 0);
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: all.map(d => d.length > 18 ? d.substring(0, 18) + '…' : d),
+      datasets: [{
+        data: values,
+        backgroundColor: values.map(v => v ? 'rgba(201,168,76,0.8)' : 'rgba(122,110,98,0.15)'),
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { display: false, max: 1.5 },
+        x: { grid: { display: false }, ticks: { font: { size: 11, family: 'DM Sans' }, color: '#7A6E62' } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function buildBarsChart() {
+  const ctx = document.getElementById('chart-bars').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Profil', 'Comm.', 'Motivation', 'Prép.', 'Impl.', 'Technique', 'Pitch', 'CV', 'Pres.'],
+      datasets: [{
+        data: [
+          getScore('overall_impression'),
+          getScore('personality'),
+          getScore('motivation'),
+          getScore('preparation'),
+          getScore('commitment'),
+          getScore('technical_depth'),
+          getScore('pitching_ability'),
+          getScore('cv_relevance'),
+          getScore('pptx_quality'),
+        ],
+        backgroundColor: [
+          'rgba(201,168,76,0.9)','rgba(201,168,76,0.75)','rgba(201,168,76,0.6)',
+          'rgba(139,105,20,0.9)','rgba(139,105,20,0.75)','rgba(139,105,20,0.6)',
+          'rgba(45,40,32,0.9)','rgba(45,40,32,0.75)','rgba(45,40,32,0.6)',
+        ],
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { min: 0, max: 5, ticks: { stepSize: 1, font: { size: 11 }, color: '#7A6E62' }, grid: { color: 'rgba(122,110,98,0.1)' } },
+        x: { grid: { display: false }, ticks: { font: { size: 11, family: 'DM Sans' }, color: '#7A6E62' } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function buildDoughnut() {
+  const ctx = document.getElementById('chart-doughnut').getContext('2d');
+  const selected = answers['points_to_deepen'] || [];
+  const all = ['Valorisation immobilière', 'Club Deal obligataire', 'Mécanismes In Fine', 'Analyse de risque', 'Pitch investisseurs', 'Reporting & KPI', 'Fiscalité immobilière'];
+
+  const labels = selected.length ? selected : all;
+  const data = labels.map(() => selected.length ? 1 : 1);
+  const colors = ['#C9A84C','#8B6914','#2D2820','#7A6E62','#E8D5A3','#4CAF82','#A0856A'];
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors.slice(0, labels.length),
+        borderWidth: 0,
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 12, family: 'DM Sans' }, padding: 16, color: '#2D2820', boxWidth: 12, boxHeight: 12, borderRadius: 4 } }
+      }
+    }
+  });
+}
+
+function buildComments() {
+  const list = document.getElementById('comments-list');
+  const items = [
+    { tag: 'Global', id: 'free_comment' },
+  ];
+
+  const rendered = items
+    .filter(i => answers[i.id] && answers[i.id].trim())
+    .map(i => `
+      <div class="comment-item">
+        <span class="comment-tag">${i.tag}</span>
+        <div class="comment-body"><p>${answers[i.id]}</p></div>
+      </div>
+    `).join('');
+
+  list.innerHTML = rendered || `<div class="comment-item"><div class="comment-body"><p style="color:var(--muted);font-style:italic">Aucun commentaire libre renseigné.</p></div></div>`;
+}
+
+// ================================================================
+// DATABASE SCREEN
+// ================================================================
+function loadDbScreen() {
+  const all = loadAll();
+
+  // Stats
+  const statsRow = document.getElementById('db-stats-row');
+  if (!statsRow) return;
+
+  const avgGlobal = all.length
+    ? (all.reduce((s, e) => s + e.globalScore, 0) / all.length).toFixed(2)
+    : '—';
+  const best = all.length
+    ? all.reduce((b, e) => e.globalScore > b.globalScore ? e : b, all[0])
+    : null;
+
+  statsRow.innerHTML = `
+    <div class="db-stat">
+      <div class="db-stat-label">Évaluations</div>
+      <div class="db-stat-value">${all.length}</div>
+    </div>
+    <div class="db-stat">
+      <div class="db-stat-label">Score moyen</div>
+      <div class="db-stat-value">${avgGlobal}${all.length ? '/5' : ''}</div>
+    </div>
+    <div class="db-stat">
+      <div class="db-stat-label">Meilleur score</div>
+      <div class="db-stat-value">${best ? best.globalScore + '/5' : '—'}</div>
+    </div>
+    <div class="db-stat">
+      <div class="db-stat-label">Dernier évaluateur</div>
+      <div class="db-stat-value" style="font-size:18px">${all.length ? all[all.length-1].evaluator : '—'}</div>
+    </div>
+  `;
+
+  const content = document.getElementById('db-content');
+
+  if (all.length === 0) {
+    content.innerHTML = `
+      <div class="db-empty">
+        <div class="db-empty-icon">📋</div>
+        <p>Aucune évaluation enregistrée pour l'instant.<br>Complétez le formulaire pour commencer.</p>
+      </div>`;
+    return;
+  }
+
+  const rows = all.slice().reverse().map(e => {
+    const scoreClass = e.globalScore >= 4 ? 'high' : e.globalScore >= 2.5 ? 'mid' : 'low';
+    const scoreEmoji = e.globalScore >= 4 ? '●' : e.globalScore >= 2.5 ? '●' : '●';
+    const comment = e.answers?.free_comment ? e.answers.free_comment.substring(0, 60) + (e.answers.free_comment.length > 60 ? '…' : '') : '<span style="color:#aaa;font-style:italic">Aucun</span>';
+
+    return `
+      <tr>
+        <td><strong>${e.evaluator}</strong></td>
+        <td>${e.date}</td>
+        <td><span class="db-score-pill ${scoreClass}">${scoreEmoji} ${e.globalScore}/5</span></td>
+        <td style="max-width:220px;font-size:13px;color:#4A4035">${comment}</td>
+        <td>
+          <button class="db-btn-view" onclick="viewEntry('${e.id}')">Voir détails</button>
+        </td>
+        <td>
+          <button class="db-btn-delete" onclick="confirmDelete('${e.id}')" title="Supprimer">✕</button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="db-table-wrap">
+      <table class="db-table">
+        <thead>
+          <tr>
+            <th>Évaluateur</th>
+            <th>Date</th>
+            <th>Score global</th>
+            <th>Commentaire</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function confirmDelete(id) {
+  if (confirm('Supprimer cette évaluation ?')) deleteEntry(id);
+}
+
+function viewEntry(id) {
+  const entry = loadAll().find(e => e.id === id);
+  if (!entry) return;
+  answers = { ...entry.answers };
+  buildDashboard();
+  // Show custom header in dashboard
+  document.querySelector('.dash-subtitle').textContent =
+    `Évaluation par ${entry.evaluator} — ${entry.date}`;
+  showScreen('screen-dashboard');
+}
+</script>
+<!-- ============================================================ -->
+<!-- SCREEN 5: DATABASE -->
+<!-- ============================================================ -->
+<div class="screen" id="screen-db">
+  <div class="db-header">
+    <div class="db-header-left">
+      <h2>Base de données — Évaluations</h2>
+      <p>Historique de tous les feedbacks enregistrés pour Océane Comlan</p>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <button class="btn-new-eval" onclick="showScreen('screen-welcome')">+ Nouvelle évaluation</button>
+      <button onclick="showScreen('screen-welcome')" style="background:transparent;border:1px solid rgba(247,243,238,0.2);color:rgba(247,243,238,0.6);padding:11px 20px;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">← Retour</button>
+    </div>
+  </div>
+  <div class="db-body">
+    <div class="db-stats-row" id="db-stats-row"></div>
+    <div id="db-content"></div>
+  </div>
+</div>
+
+
+</html>
